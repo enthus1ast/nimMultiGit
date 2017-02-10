@@ -1,9 +1,9 @@
-##executes a git command line on ever git repo in the actual folder
+##executes a git command line on every git repo in the current folder
 ##going one folder level down
 ##
-## mgit status
-## mgit push
-## mgit remote add origin host:port/folder/$repo
+## mgit nim* status
+## mgit nim* push
+## mgit nim* remote add origin host:port/folder/$REPO
 import sets
 import os
 import strutils
@@ -76,12 +76,15 @@ when isMainModule:
     dumpRepoHeadline(quoted)
     var cmdLine: seq[string] = @[]
     for each in 2..paramCount():
-      cmdLine.add paramStr(each)
+      if paramStr(each).contains(" "):
+        cmdLine.add "\"" & paramStr(each) & "\""
+      else:  
+        cmdLine.add paramStr(each)
     
     var cmdLineStr = cmdLine.join(" ")
     for k,v in context:
       cmdLineStr = cmdLineStr.replace(k,v)
-
+    echo cmdLineStr
     discard execShellCmd( "git " & cmdLineStr )
 
   setCurrentDir(orgCurrentDir)
