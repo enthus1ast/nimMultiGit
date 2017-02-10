@@ -8,7 +8,10 @@ import sets
 import os
 import strutils
 import osproc
+import strtabs
+import times
 
+var context = newStringTable()
 var orgCurrentDir = getCurrentDir()
 
 proc buildIndex(pattern: string): HashSet[string] =
@@ -43,7 +46,7 @@ proc writeHelp() =
         commit -m "wip $REPO"
 
     variables in command:
-        $REPO points to the actual repository
+        $REPO points to the actual repository name (withouth path)
         $TIMESTAMP gives an unix timestamp 
         ...
   """
@@ -60,19 +63,26 @@ when isMainModule:
     quit()
 
   for each in locations:
+    context["$REPO"] = each
+    context["$TIMESTAMP"] = $(epochTime().int)
     setCurrentDir(orgCurrentDir)
     var quoted = each.replace(" ","\\ ") # TODO how fukd is windows??
     try:
         setCurrentDir(quoted)
     except:
         echo "Could not switch to dir: ", quoted
+        echo "[Press any key to continue]"
         discard readLine(stdin)
     dumpRepoHeadline(quoted)
     var cmdLine: seq[string] = @[]
     for each in 2..paramCount():
       cmdLine.add paramStr(each)
+    
+    var cmdLineStr = cmdLine.join(" ")
+    for k,v in context:
+      cmdLineStr = cmdLineStr.replace(k,v)
 
-    discard execShellCmd( "git " & cmdLine.join(" ") )
+    discard execShellCmd( "git " & cmdLineStr )
 
   setCurrentDir(orgCurrentDir)
 
